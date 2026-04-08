@@ -35,14 +35,10 @@ id="diffusion-models-as-constraint-solvers-a-sudoku-benchmark">Diffusion
 Models as Constraint Solvers: A Sudoku Benchmark</h1>
 <p><em>April 2026</em></p>
 <hr />
-<p>I’m trying to use diffusion models to solve Sudoku puzzles —
-specifically, to find better approximate solutions within the same
-compute budget as classical approaches. This post documents what I
-built, what I found, and why the architecture matters more than I
-expected.</p>
-<p>The research question: <strong>can diffusion models learn constraint
+<p>I’m trying to use diffusion models to solve Sudoku puzzles. Specifically, to find better approximate solutions within the same compute budget as classical approaches. This post documents what I built and what I found, and why architecture matters.</p>
+<p>The question: <strong>can diffusion models learn constraint
 structure better than autoregressive models?</strong></p>
-<p>The short answer is yes, measurably and mechanistically. Here is the
+<p>The short answer is yes (at least on easy puzzles!). Here is the
 evidence.</p>
 <hr />
 <h2 id="why-architecture-matters-for-constraint-satisfaction">Why
@@ -50,12 +46,10 @@ architecture matters for constraint satisfaction</h2>
 <p>Most hard problems share a structural property: the correct value for
 any one component depends on the global configuration of all other
 components. In Sudoku, you cannot correctly fill in cell A1 without
-knowing the rest of the board — a digit that looks locally plausible
-might violate a constraint on the other side of the grid. Protein
-folding has the same structure. So does drug-target binding. So does
-circuit design.</p>
-<p>Autoregressive models — the architecture underlying GPT, Claude, and
-every major LLM — generate sequences one token at a time, left to right,
+knowing the rest of the board, a digit that looks locally plausible
+might violate a constraint on the other side of the grid.</p>
+<p>Autoregressive models: the architecture underlying GPT, Claude, and
+every major LLM, generates sequences one token at a time, left to right,
 with no ability to revise. Each prediction is made before the rest of
 the sequence exists. For constraint satisfaction problems, this means
 making the hardest decision first with the least information.</p>
@@ -63,7 +57,7 @@ making the hardest decision first with the least information.</p>
 version of the entire output and iteratively refine it. The critical
 architectural difference is attention: autoregressive models use a
 causal mask that prevents each position from seeing future positions.
-Diffusion models use bidirectional attention — every position attends to
+Diffusion models use bidirectional attention, every position attends to
 every other position simultaneously. When predicting cell A1, the model
 has already seen cell I9.</p>
 <p>This is the same reason GPUs beat CPUs on deep learning: the problem
@@ -71,8 +65,8 @@ structure is parallel, and the hardware should match. Autoregression
 imposes sequential structure on problems that don’t require it.
 Diffusion doesn’t.</p>
 <p>Diffusion models have been largely overlooked for language tasks
-because language modeling rewards sequential precision — reasoning,
-coding, instruction following — where autoregression excels. They also
+because language modeling rewards sequential precision; reasoning,
+coding, instruction following. This is where autoregression excels. They also
 haven’t benefited from the same scale of compute investment. But for
 constraint satisfaction problems, where global consistency matters more
 than local precision, the architectural match is different. This is the
@@ -85,7 +79,7 @@ hypothesis this project tests.</p>
 31–36 given cells and are solvable by constraint propagation alone — no
 search required. Uniformly easy.</p>
 <h3 id="baseline-1-classical-solver">Baseline 1: Classical Solver</h3>
-<p>Norvig’s constraint propagation + depth-first backtracking search.
+<p>Norvig’s classic constraint propagation + depth-first backtracking search.
 Two rules applied iteratively: naked singles (if a cell has one
 remaining possibility, assign it) and hidden singles (if a digit can
 only go in one place in a unit, put it there). When propagation stalls,
@@ -156,7 +150,7 @@ tokens in a single left-to-right pass.</p>
 hours on Apple M-series.</p>
 <h3 id="baseline-3-masked-diffusion">Baseline 3: Masked Diffusion</h3>
 <p>Transformer encoder with bidirectional attention. Unknown cells are
-randomly masked during training — the model predicts correct digits at
+randomly masked during training. The model predicts correct digits at
 masked positions only. Given cells are never masked. At inference, all
 unknown cells are masked and the model predicts them simultaneously.</p>
 <table>
@@ -201,7 +195,7 @@ unknown cells are masked and the model predicts them simultaneously.</p>
 hours.</p>
 <h3 id="baseline-4-uniform-diffusion">Baseline 4: Uniform Diffusion</h3>
 <p>Same encoder architecture as masked diffusion. Unknown cells are
-replaced with random digits rather than a mask token — the model must
+replaced with random digits rather than a mask token. The model must
 detect which tokens are wrong and correct them, rather than simply
 filling in blanks. Two tasks instead of one: error detection and error
 correction.</p>
@@ -259,14 +253,14 @@ hours.</p>
 </tbody>
 </table>
 <p>The diffusion model at 100k puzzles (41.82% puzzle accuracy) already
-outperforms the AR model at 500k puzzles (11.88%) — with 5x less
+outperforms the AR model at 500k puzzles (11.88%), with 5x less
 training data and fewer parameters.</p>
 <p>Uniform diffusion fails to solve any puzzles at this compute budget.
 The loss curve tells the story: masked diffusion converges from 0.67 to
 0.02 over 20 epochs. Uniform diffusion converges from 1.14 to 0.80. The
-harder training signal — detecting wrong digits rather than filling in
-blanks — requires significantly more compute to produce useful learning.
-This is consistent with von Rütte et al. (2025), who note that uniform
+harder training signal (detecting wrong digits rather than filling in
+blanks) requires significantly more compute to produce useful learning.
+This is consistent with von Rütte et al. (2025), who notes that uniform
 diffusion’s advantage over masked diffusion only emerges at large
 scale.</p>
 <h3 id="the-position-gradient">The position gradient</h3>
@@ -283,9 +277,8 @@ autoregressive model:</p>
 97.8 | 98.3 | 98.8 | 99.0 | 99.2 | 99.4 | 99.4 | 99.5 | 99.6</code></pre>
 <p>A clean monotonic gradient from 85.6% (A1, top-left) to 99.6% (I9,
 bottom-right). The model gets better at each position simply because it
-has seen more of the board. This is the fingerprint of sequential
-commitment — not constraint reasoning, but positional pattern
-matching.</p>
+has seen more of the board. This is evidence of sequential
+commitment.</p>
 <p>For the masked diffusion model:</p>
 <pre><code>98.7 | 98.8 | 98.8 | 98.9 | 98.7 | 98.7 | 98.8 | 98.8 | 98.7
 98.7 | 98.8 | 98.8 | 98.8 | 98.7 | 98.7 | 98.8 | 98.8 | 98.8
@@ -298,12 +291,11 @@ matching.</p>
 98.7 | 98.7 | 98.8 | 98.7 | 98.7 | 98.7 | 98.8 | 98.7 | 98.7</code></pre>
 <p>Flat. 98.7%–98.9% across all 81 positions, a range of 0.2 percentage
 points. The gradient is gone because every cell has the same global
-context. This is the architectural difference made visible.</p>
+context. This is the architecture difference.</p>
 <h3 id="constraint-violations">Constraint violations</h3>
 <p>Cell accuracy is a misleading metric for constraint satisfaction. A
-model can get many individual digits correct while producing a globally
-incoherent output. The constraint violation rate — how often a completed
-grid violates a Sudoku rule — is more meaningful.</p>
+model can get many individual digits correct (through pure statistical probability optimization) while producing an incoherent output. The constraint violation rate (how often a completed
+grid violates a Sudoku rule) is more meaningful.</p>
 <table>
 <colgroup>
 <col style="width: 25%" />
@@ -341,7 +333,7 @@ grid violates a Sudoku rule — is more meaningful.</p>
 </tbody>
 </table>
 <p>The autoregressive model produces 6.16 constraint violations per
-puzzle on average — even within its training distribution. Despite 96.3%
+puzzle on average, even within its training distribution. Despite 96.3%
 cell accuracy, 88% of its solutions are invalid. The 11.9% puzzle
 accuracy comes entirely from cases where positional pattern matching
 happens to produce a valid grid by coincidence.</p>
@@ -353,7 +345,7 @@ decoding</h3>
 <p>Rather than unmasking all positions at once, iterative decoding
 unmasks only the k most confident predictions per pass, then reruns the
 model with those positions now visible. High-confidence predictions
-constrain uncertain ones in subsequent passes — the learned analog of
+constrain uncertain ones in subsequent passes, the learned analog of
 Norvig’s minimum remaining values heuristic.</p>
 <table>
 <thead>
@@ -399,19 +391,19 @@ Norvig’s minimum remaining values heuristic.</p>
 </table>
 <p>k=5 is the practical optimum: 100% accuracy in 10 passes,
 approximately 2x slower than one-shot. The model has learned genuine
-confidence calibration — it knows which cells it is certain about and
+confidence calibration, it knows which cells it is certain about and
 which are uncertain, and the iterative process exploits this to
 propagate constraints until the board is consistent.</p>
 <hr />
 <h2 id="results-hard-puzzles">Results: hard puzzles</h2>
-<p>The easy dataset is uniformly easy — all puzzles solvable by
-constraint propagation, none requiring search. Hard Sudoku puzzles
+<p>The easy dataset is uniformly easy and all puzzles are solvable through pure
+constraint propagation alone, none requiring search. Hard Sudoku puzzles
 (17–25 given cells) require genuine hypothesis generation and
 backtracking. This is categorically different from constraint
 propagation, not merely harder. A model trained on easy puzzles has
-learned deduction. Hard puzzles require search.</p>
-<p>We evaluated all models on 1,000 hard puzzles from
-<code>imone/sudoku-hard-v2</code> — curated benchmarks from the
+learned deduction. Hard puzzles require search. This is an entirely different skill that the model has not learned.</p>
+<p>I evaluated all models on 1,000 hard puzzles from
+<code>imone/sudoku-hard-v2</code>. Curated benchmarks from the
 competitive Sudoku solving community, rated by solver backtrack count.
 Rating &gt; 50 backtracks required.</p>
 <h3 id="out-of-distribution-results">Out-of-distribution results</h3>
@@ -456,7 +448,7 @@ hard puzzles. Both collapse to ~42% cell accuracy with 26+ violations
 per puzzle. The architectural advantage disappears when the model has no
 relevant training distribution to draw from.</p>
 <p>The divergence appears with iterative decoding. k=1 iterative
-decoding — one cell committed per pass — reduces masked diffusion’s
+decoding, one cell committed per pass, reduces masked diffusion’s
 violations from 26.22 to 2.77. It solved 6 of 1000 hard puzzles
 correctly. The autoregressive model has no iterative analog and solved
 zero.</p>
@@ -497,19 +489,19 @@ zero.</p>
 </tr>
 </tbody>
 </table>
-<p>On easy puzzles k=5 was optimal. On hard puzzles k=1 is optimal —
+<p>On easy puzzles k=5 was optimal. On hard puzzles k=1 is optimal:
 fewer violations and higher accuracy. With only 17–25 givens, each wrong
 commitment cascades more aggressively. Slower unmasking gives each new
 token maximum context before committing.</p>
 <p>The 2.77 violation result is the most significant finding for hard
-puzzles. It means most outputs are near-valid Sudoku grids —
+puzzles. It means most outputs are near-valid Sudoku grids,
 structurally close to correct even when numerically wrong. The
 autoregressive model’s 25.67 violations are distributed across the
 entire grid incoherently. These are qualitatively different failure
 modes. One model is approximately right and locally broken. The other is
 globally wrong.</p>
 <p>The position gradient also disappears on hard puzzles for the AR
-model — 36%–46% with no directional pattern, compared to the clean
+model: 36%–46% with no directional pattern, compared to the clean
 85.6%→99.6% on easy puzzles. The memorized positional statistics don’t
 apply, so the sequential commitment advantage vanishes. Every position
 is equally lost.</p>
@@ -575,13 +567,11 @@ structure better than autoregressive models. The answer is yes.</p>
 models learn positional statistics, diffusion models learn global
 structure. The violation analysis confirms it: the autoregressive
 model’s 88% violation rate on easy puzzles is not a hard puzzle problem,
-it is a fundamental property of sequential commitment. The diffusion
+it is a consequence of sequential commitment. The diffusion
 model’s zero violation rate with iterative decoding shows that the
 learned constraint structure is genuine and usable.</p>
-<p>What we cannot yet say is whether this generalizes — whether models
-trained on hard puzzles can actually solve them, whether the advantage
-scales to problems where the constraint structure is not given
-explicitly. That is the question for the next post.</p>
+<p>What we can't say is whether this generalizes. Whether models
+trained on hard puzzles can actually solve them. That's the next question I'm going to explore.</p>
 <hr />
 <h2 id="code-and-data">Code and data</h2>
 <p>All code: <a
