@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Can We Train Models to Solve Hard Sudokus?</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Can We Train Models to Solve Hard Sudokus?</h1>
+</header>
+<h1 id="can-we-train-models-to-solve-hard-sudokus">Can We Train Models
+to Solve Hard Sudokus?</h1>
+<p><em>April 2026</em></p>
+<hr />
+<p>In <a href="/post1.html">Post 1</a>, I showed that masked diffusion
+models learn constraint structure better than autoregressive
+transformers on easy Sudoku puzzles. The position gradient disappeared,
+constraint violations dropped from 6.16 to zero with iterative decoding,
+and puzzle accuracy jumped from 12% to 100%. The architecture
+matters.</p>
+<p>But easy Sudoku puzzles are a specific kind of problem. All 500,000
+training puzzles had 31–36 given cells and were solvable by constraint
+propagation alone. No search required. The models learned to propagate
+constraints. They never learned to search.</p>
+<p>When I tested them on hard puzzles (17–25 givens, requiring genuine
+backtracking) both models collapsed. The autoregressive model produced
+outputs with 25+ constraint violations per puzzle. The masked diffusion
+model with k=1 iterative decoding reduced this to 2.77 violations and
+solved 6 of 1000 hard puzzles correctly. Better, but not by much.</p>
+<p>The obvious question: what happens if we train on hard puzzles?</p>
+<p>This post documents the answer. The short version: training on hard
+puzzles helps slightly, but nothing we tried breaks through the
+fundamental ceiling. The limitation is not the training data. It is the
+architecture.</p>
+<hr />
+<h2 id="what-makes-a-sudoku-puzzle-hard">What makes a Sudoku puzzle
+hard</h2>
+<p>Before running experiments, it is worth being precise about what
+“hard” means here.</p>
+<p>Easy puzzles (31–36 given cells) are solvable by constraint
+propagation. Given the fixed cells, you can deduce the rest through two
+rules applied repeatedly: if a cell has only one possible value, assign
+it; if a unit has only one possible location for a digit, place it
+there. No guessing required. The solution follows logically from the
+givens.</p>
+<p>Hard puzzles (17–25 given cells) cannot be solved this way.
+Constraint propagation gets you partway, then stalls. At that point you
+must guess: commit to a value for some cell, follow the consequences,
+and backtrack if you hit a contradiction. The hardest known puzzles
+require thousands of backtracks.</p>
+<p>This is not merely a quantitative difference. It is a qualitative
+one. Easy puzzles require deduction. Hard puzzles require search. These
+are different cognitive operations, and a model trained to do one does
+not automatically learn the other.</p>
+<p>All hard puzzle experiments use the <code>imone/sudoku-hard-v2</code>
+dataset, curated benchmarks from the competitive Sudoku solving
+community rated by solver backtrack count. Puzzles with rating &gt; 50
+backtracks. All evaluations use the held-out test split (44,570 puzzles)
+to avoid train/test overlap.</p>
+<hr />
+<h2 id="three-training-regimes">Three training regimes</h2>
+<p>I tested three approaches for each architecture.</p>
+<p><strong>Easy-only (baseline):</strong> 500,000 easy puzzles, trained
+from scratch. This is the Post 1 model, included here for
+comparison.</p>
+<p><strong>Finetuned on hard:</strong> Load the easy-only checkpoint,
+continue training on 500,000 hard puzzles at a reduced learning rate
+(1e-4 instead of 1e-3). The lower rate is intended to prevent
+catastrophic forgetting. The model adapts to hard puzzles without
+overwriting what it learned about easy ones.</p>
+<p><strong>Combined easy+hard:</strong> 250,000 easy + 250,000 hard
+puzzles shuffled together, trained from scratch. Same total training
+scale as the other runs.</p>
+<p>Both architectures (autoregressive transformer and masked diffusion)
+were trained under all three regimes, 20 epochs each, approximately 9
+hours per run on Apple M-series.</p>
+<hr />
+<h2 id="results-masked-diffusion">Results: masked diffusion</h2>
+<h3 id="loss-curves">Loss curves</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Start loss</th>
+<th>End loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Easy-only</td>
+<td>0.577</td>
+<td>0.021</td>
+</tr>
+<tr>
+<td>Finetuned hard</td>
+<td>0.359</td>
+<td>0.324</td>
+</tr>
+<tr>
+<td>Combined</td>
+<td>0.410</td>
+<td>0.213</td>
+</tr>
+</tbody>
+</table>
+<p>The finetuned model starts at 0.359, already far better than the
+easy-only model’s first epoch, confirming that easy puzzle pre-training
+transfers. But the improvement over 20 epochs is modest: 10% loss
+reduction compared to 97% for the easy-only run. The model is adapting
+slowly, not learning rapidly.</p>
+<p>The combined model lands between the two: harder than pure easy
+training, much easier than pure hard.</p>
+<h3 id="hard-puzzle-performance">Hard puzzle performance</h3>
+<p>Evaluated on 1,000 held-out hard puzzles. Masked diffusion uses k=1
+iterative decoding (one cell committed per pass) as the primary metric,
+established in Post 1 as the optimal configuration for hard puzzles.</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>k=1 Puzzle acc</th>
+<th>k=1 Violations</th>
+<th>One-shot Cell acc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Easy-only</td>
+<td>0.60%</td>
+<td>2.82</td>
+<td>41.77%</td>
+</tr>
+<tr>
+<td>Finetuned hard</td>
+<td>1.50%</td>
+<td>2.39</td>
+<td>46.45%</td>
+</tr>
+<tr>
+<td>Combined</td>
+<td>0.80%</td>
+<td>2.79</td>
+<td>45.39%</td>
+</tr>
+</tbody>
+</table>
+<p>Finetuned wins across every metric. Sequential training (master easy
+puzzles first, then adapt to hard) outperforms simultaneous mixed
+training. The model that built a foundation in constraint propagation
+before encountering search-requiring puzzles performs better than the
+model that faced both simultaneously.</p>
+<p>This result has an interesting implication for the nature of the two
+puzzle types. If easy and hard puzzles were simply points on a single
+difficulty continuum, you would expect the combined model to perform at
+least as well as finetuned, since it sees both difficulty levels
+throughout training. The fact that sequential training is better
+suggests the skills are genuinely different and are better learned in
+order.</p>
+<h3 id="the-ceiling">The ceiling</h3>
+<p>The improvements are real but modest. Finetuned achieves 1.50% puzzle
+accuracy versus 0.60% for easy-only, a 2.5x improvement. But this means
+solving 15 hard puzzles in 1000 instead of 6. The violation reduction
+from 2.82 to 2.39 is statistically meaningful but not qualitatively
+transformative.</p>
+<p>More training does not break through. The model has approached its
+ceiling.</p>
+<hr />
+<h2 id="results-autoregressive-transformer">Results: autoregressive
+transformer</h2>
+<h3 id="loss-curves-1">Loss curves</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Start loss</th>
+<th>End loss</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Easy-only</td>
+<td>[not logged]</td>
+<td>~0.19</td>
+</tr>
+<tr>
+<td>Finetuned hard</td>
+<td>0.853</td>
+<td>0.823</td>
+</tr>
+<tr>
+<td>Combined</td>
+<td>0.636</td>
+<td>0.487</td>
+</tr>
+</tbody>
+</table>
+<p>The finetuned AR model barely moves: 0.853 to 0.823 over 20 epochs.
+This is qualitatively different from masked diffusion finetuning. The AR
+training objective asks the model to predict each token given all
+previous tokens. For hard puzzles where early cells are genuinely
+undetermined by prior context, this gradient signal is extremely noisy.
+The model is being asked to learn something that cannot be learned from
+the left-to-right perspective.</p>
+<p>The combined AR model learns more. The easy puzzle signal provides
+optimization traction. But it ends at 0.487, far above the masked
+diffusion combined model’s 0.213.</p>
+<h3 id="hard-puzzle-performance-1">Hard puzzle performance</h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Puzzle acc</th>
+<th>Cell acc</th>
+<th>Avg violations</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AR easy-only</td>
+<td>0.00%</td>
+<td>41.72%</td>
+<td>25.67</td>
+</tr>
+<tr>
+<td>AR finetuned hard</td>
+<td>0.00%</td>
+<td>47.14%</td>
+<td>26.14</td>
+</tr>
+<tr>
+<td>AR combined</td>
+<td>0.00%</td>
+<td>45.46%</td>
+<td>26.35</td>
+</tr>
+</tbody>
+</table>
+<p>The violation numbers are flat: 25.67, 26.14, 26.35. Approximately 26
+violations per puzzle regardless of training regime. Cell accuracy
+improves with hard training (41.72% to 47.14%) but the model never
+learns to produce valid grids. More hard puzzle training shifts which
+digits the AR model predicts. It does not give the model a mechanism for
+global consistency.</p>
+<hr />
+<h2 id="the-architectural-divide">The architectural divide</h2>
+<p>Putting both architectures together:</p>
+<pre><code>Hard puzzle test set (n=1000, held-out):
+
+                        Puzzle acc   Cell acc    Avg violations
+                        (k=1 for     (one-shot)  (k=1 for
+                        diffusion)               diffusion)
+AR easy-only            0.00%        41.72%      25.67
+AR finetuned hard       0.00%        47.14%      26.14
+AR combined             0.00%        45.46%      26.35
+
+Masked easy-only        0.60%        41.77%      2.82
+Masked finetuned        1.50%        46.45%      2.39
+Masked combined         0.80%        45.39%      2.79</code></pre>
+<p>The divide is definitive. No training regime brings AR violations
+below 25. Masked diffusion with k=1 iterative decoding stays below 3
+across all training regimes. Cell accuracy is comparable between
+architectures (both improve with hard training to roughly 45–47%) but
+violations tell the opposite story.</p>
+<p>Cell accuracy is a misleading metric for constraint satisfaction. A
+model can learn to predict the correct digit in more cells while still
+producing fundamentally invalid grids. The autoregressive model
+demonstrates this precisely: 47% cell accuracy with 26 violations per
+puzzle means it is getting nearly half of individual digits right within
+outputs that violate every constraint unit. Correct digits in an invalid
+grid are not solutions.</p>
+<p>Violation count is the honest measure. And by that measure, the
+architectural difference is not a matter of degree. It is
+categorical.</p>
+<hr />
+<h2 id="why-more-data-cannot-fix-this">Why more data cannot fix
+this</h2>
+<p>The natural question: if we trained on more hard puzzles, or for more
+epochs, would the models eventually break through?</p>
+<p>The answer is probably no, and the reason is structural.</p>
+<p>Masked diffusion with iterative decoding is a greedy forward process.
+It commits to cells in order of confidence, one at a time, with no
+ability to revise committed decisions. When it makes a wrong early
+commitment on a hard puzzle, subsequent predictions propagate from that
+error. The model cannot backtrack.</p>
+<p>This is the same fundamental limitation as Norvig’s constraint
+propagation phase before search kicks in. Propagation alone solves easy
+puzzles. It stalls on hard ones. The difference is that Norvig’s solver
+has backtracking search as a fallback. The diffusion model does not.</p>
+<p>More data teaches the model to make better initial guesses. It does
+not give the model a mechanism to recover from wrong ones. The ceiling
+is not a data ceiling. It is an architectural one.</p>
+<p>The autoregressive model has an even more fundamental limitation: it
+cannot enforce global consistency at all, regardless of how it is
+trained. Its outputs on hard puzzles have 26 constraint violations
+because it generates left to right and commits to each cell before
+seeing the rest of the board. No training regime can give it global
+information during generation.</p>
+<hr />
+<h2 id="what-the-numbers-say-about-hard-sudoku">What the numbers say
+about hard Sudoku</h2>
+<p>Stepping back: every model we trained, regardless of architecture or
+training regime, fails to solve more than 1.5% of hard puzzles. The best
+model (masked diffusion, finetuned, k=1) solves 15 in 1000. This is not
+a training failure or an implementation bug. It is telling us something
+about the problem.</p>
+<p>Hard Sudoku is NP-complete. What we have been building are
+approximate constraint propagators: models that learn to fill in cells
+consistently given partial information. This is a real skill, and it
+generalizes better from diffusion than from autoregressive generation.
+But approximate constraint propagation is not the same as search.</p>
+<p>The models that succeed on easy puzzles have learned, in effect, to
+simulate the first phase of Norvig’s solver. They can propagate
+constraints. They cannot search. And search is what hard puzzles
+require.</p>
+<p>This is not a criticism of the approach. It is a clarification of
+what the approach is and what it needs to become.</p>
+<hr />
+<h2 id="what-comes-next">What comes next</h2>
+<p>The results from Post 1 showed that architecture matters for
+constraint learning. The results here show that training regime matters
+less than architecture. No amount of hard puzzle training gives a model
+backtracking.</p>
+<p>The obvious question: is there an architecture that can learn to
+search?</p>
+<p>Uniform diffusion is a candidate. Rather than filling in blank cells,
+a uniform diffusion model is trained to detect and correct errors. It
+receives a sequence with randomly corrupted cells and learns to identify
+which ones are wrong and what they should be. This is closer in spirit
+to iterative refinement and backtracking: look at the whole board,
+decide what needs fixing, fix it.</p>
+<p>In Post 1, the uniform diffusion model failed. But that failure had a
+specific cause: the architecture conflated two distinct tasks (detecting
+which tokens are wrong and predicting what they should be) into a single
+output head. The gradient signal was noisy and learning stalled.</p>
+<p>Von Rütte et al. (2025) propose a fix: explicitly separate these into
+two distinct predictions, one for the holding distribution (how
+confident is this token correct) and one for the jump chain (what should
+it be changed to). This disentanglement produces cleaner gradients and
+potentially allows the model to learn genuine iterative refinement.</p>
+<p>That is the next experiment.</p>
+<hr />
+<h2 id="code-and-data">Code and data</h2>
+<p>All code: <a
+href="https://github.com/harry-david-brown">github.com/harry-david-brown</a></p>
+<p>Hard puzzle dataset: <a
+href="https://huggingface.co/datasets/imone/sudoku-hard-v2">HuggingFace
+— imone/sudoku-hard-v2</a></p>
+<p>Referenced: von Rütte et al., <em>Scaling Behavior of Discrete
+Diffusion Language Models</em>, ICLR 2025. <a
+href="https://arxiv.org/abs/2512.10858">arxiv.org/abs/2512.10858</a></p>
+<p>Lou, <em>Sotaku</em>, 2026. <a
+href="https://github.com/chenglou/sotaku">github.com/chenglou/sotaku</a></p>
+</body>
+</html>
