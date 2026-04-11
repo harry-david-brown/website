@@ -135,13 +135,9 @@ Violation count is the honest measure. And by that measure, the architectural di
 
 ## Why more data cannot fix this
 
-The natural question: if we trained on more hard puzzles, or for more epochs, would the models eventually break through?
-
-The answer is probably no, and the reason is structural.
-
 Masked diffusion with iterative decoding is a greedy forward process. It commits to cells in order of confidence, one at a time, with no ability to revise committed decisions. When it makes a wrong early commitment on a hard puzzle, subsequent predictions propagate from that error. The model cannot backtrack.
 
-This is the same fundamental limitation as Norvig's constraint propagation phase before search kicks in. Propagation alone solves easy puzzles. It stalls on hard ones. The difference is that Norvig's solver has backtracking search as a fallback. The diffusion model does not.
+This is the same fundamental limitation as Norvig's constraint propagation phase before search kicks in. Propagation alone solves easy puzzles. It stalls on hard ones. The difference is that Norvig's solver has backtracking search as a fallback, but the diffusion model does not.
 
 More data teaches the model to make better initial guesses. It does not give the model a mechanism to recover from wrong ones. The ceiling is not a data ceiling. It is an architectural one.
 

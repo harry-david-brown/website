@@ -181,12 +181,11 @@
 models learn constraint structure better than autoregressive
 transformers on easy Sudoku puzzles. The position gradient disappeared,
 constraint violations dropped from 6.16 to zero with iterative decoding,
-and puzzle accuracy jumped from 12% to 100%. The architecture
-matters.</p>
+and puzzle accuracy jumped from 12% to 100%.</p>
 <p>But easy Sudoku puzzles are a specific kind of problem. All 500,000
 training puzzles had 31–36 given cells and were solvable by constraint
 propagation alone. No search required. The models learned to propagate
-constraints. They never learned to search.</p>
+constraints, but they never learned to search.</p>
 <p>When I tested them on hard puzzles (17–25 givens, requiring genuine
 backtracking) both models collapsed. The autoregressive model produced
 outputs with 25+ constraint violations per puzzle. The masked diffusion
@@ -194,18 +193,16 @@ model with k=1 iterative decoding reduced this to 2.77 violations and
 solved 6 of 1000 hard puzzles correctly. Better, but not by much.</p>
 <p>The obvious question: what happens if we train on hard puzzles?</p>
 <p>This post documents the answer. The short version: training on hard
-puzzles helps slightly, but nothing we tried breaks through the
-fundamental ceiling. The limitation is not the training data. It is the
-architecture.</p>
+puzzles helps slightly, but nothing I tried breaks through the ceiling.</p>
 <hr />
 <h2 id="what-makes-a-sudoku-puzzle-hard">What makes a Sudoku puzzle
 hard</h2>
-<p>Before running experiments, it is worth being precise about what
+<p>Before running experiments, we should be precise about what
 “hard” means here.</p>
 <p>Easy puzzles (31–36 given cells) are solvable by constraint
 propagation. Given the fixed cells, you can deduce the rest through two
 rules applied repeatedly: if a cell has only one possible value, assign
-it; if a unit has only one possible location for a digit, place it
+it; if a unit (row, column, box) has only one possible location for a digit, place it
 there. No guessing required. The solution follows logically from the
 givens.</p>
 <p>Hard puzzles (17–25 given cells) cannot be solved this way.
@@ -213,9 +210,9 @@ Constraint propagation gets you partway, then stalls. At that point you
 must guess: commit to a value for some cell, follow the consequences,
 and backtrack if you hit a contradiction. The hardest known puzzles
 require thousands of backtracks.</p>
-<p>This is not merely a quantitative difference. It is a qualitative
+<p>This is not merely a quantitative difference, it's a qualitative
 one. Easy puzzles require deduction. Hard puzzles require search. These
-are different cognitive operations, and a model trained to do one does
+are different operations, and a model trained to do one does
 not automatically learn the other.</p>
 <p>All hard puzzle experiments use the <code>imone/sudoku-hard-v2</code>
 dataset, curated benchmarks from the competitive Sudoku solving
@@ -226,7 +223,7 @@ to avoid train/test overlap.</p>
 <h2 id="three-training-regimes">Three training regimes</h2>
 <p>I tested three approaches for each architecture.</p>
 <p><strong>Easy-only (baseline):</strong> 500,000 easy puzzles, trained
-from scratch. This is the Post 1 model, included here for
+from scratch. This is the model <a href="/post1.html">from the last post</a>, included here for
 comparison.</p>
 <p><strong>Finetuned on hard:</strong> Load the easy-only checkpoint,
 continue training on 500,000 hard puzzles at a reduced learning rate
@@ -276,7 +273,7 @@ slowly, not learning rapidly.</p>
 <p>The combined model lands between the two: harder than pure easy
 training, much easier than pure hard.</p>
 <h3 id="hard-puzzle-performance">Hard puzzle performance</h3>
-<p>Evaluated on 1,000 held-out hard puzzles. Masked diffusion uses k=1
+<p>Evaluated on 1,000 hard puzzles. Masked diffusion uses k=1
 iterative decoding (one cell committed per pass) as the primary metric,
 established in Post 1 as the optimal configuration for hard puzzles.</p>
 <table>
@@ -369,6 +366,7 @@ the left-to-right perspective.</p>
 <p>The combined AR model learns more. The easy puzzle signal provides
 optimization traction. But it ends at 0.487, far above the masked
 diffusion combined model’s 0.213.</p>
+<h2>Just for fun, let's try it out on the AR models too</h2>
 <h3 id="hard-puzzle-performance-1">Hard puzzle performance</h3>
 <table>
 <thead>
@@ -433,15 +431,10 @@ demonstrates this precisely: 47% cell accuracy with 26 violations per
 puzzle means it is getting nearly half of individual digits right within
 outputs that violate every constraint unit. Correct digits in an invalid
 grid are not solutions.</p>
-<p>Violation count is the honest measure. And by that measure, the
-architectural difference is not a matter of degree. It is
-categorical.</p>
+<p>Violation count is a better measure of structural understanding.</p>
 <hr />
 <h2 id="why-more-data-cannot-fix-this">Why more data cannot fix
 this</h2>
-<p>The natural question: if we trained on more hard puzzles, or for more
-epochs, would the models eventually break through?</p>
-<p>The answer is probably no, and the reason is structural.</p>
 <p>Masked diffusion with iterative decoding is a greedy forward process.
 It commits to cells in order of confidence, one at a time, with no
 ability to revise committed decisions. When it makes a wrong early
@@ -450,10 +443,11 @@ error. The model cannot backtrack.</p>
 <p>This is the same fundamental limitation as Norvig’s constraint
 propagation phase before search kicks in. Propagation alone solves easy
 puzzles. It stalls on hard ones. The difference is that Norvig’s solver
-has backtracking search as a fallback. The diffusion model does not.</p>
+runs backtracking search after propagation has eliminated all the impossible 
+digits from the board. The diffusion model doesn't have this skill.</p>
 <p>More data teaches the model to make better initial guesses. It does
 not give the model a mechanism to recover from wrong ones. The ceiling
-is not a data ceiling. It is an architectural one.</p>
+is not a data ceiling.</p>
 <p>The autoregressive model has an even more fundamental limitation: it
 cannot enforce global consistency at all, regardless of how it is
 trained. Its outputs on hard puzzles have 26 constraint violations
@@ -475,10 +469,7 @@ generalizes better from diffusion than from autoregressive generation.
 But approximate constraint propagation is not the same as search.</p>
 <p>The models that succeed on easy puzzles have learned, in effect, to
 simulate the first phase of Norvig’s solver. They can propagate
-constraints. They cannot search. And search is what hard puzzles
-require.</p>
-<p>This is not a criticism of the approach. It is a clarification of
-what the approach is and what it needs to become.</p>
+constraints. They cannot search, and search is what we need to solve hard puzzles.</p>
 <hr />
 <h2 id="what-comes-next">What comes next</h2>
 <p>The results from Post 1 showed that architecture matters for
@@ -497,12 +488,12 @@ decide what needs fixing, fix it.</p>
 specific cause: the architecture conflated two distinct tasks (detecting
 which tokens are wrong and predicting what they should be) into a single
 output head. The gradient signal was noisy and learning stalled.</p>
-<p>Von Rütte et al. (2025) propose a fix: explicitly separate these into
-two distinct predictions, one for the holding distribution (how
-confident is this token correct) and one for the jump chain (what should
+<p>Von Rütte et al. (2025) proposes a fix: explicitly separate these into
+two distinct predictions, one for the holding distribution (how confident
+is this token correct) and one for the jump chain (what should
 it be changed to). This disentanglement produces cleaner gradients and
 potentially allows the model to learn genuine iterative refinement.</p>
-<p>That is the next experiment.</p>
+<p>That's the next experiment!</p>
 <hr />
 <h2 id="code-and-data">Code and data</h2>
 <p>All code: <a
