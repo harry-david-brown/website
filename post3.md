@@ -63,7 +63,7 @@ The GIDD paper specifies IS divergence for the holding head. IS divergence betwe
 
 $$D_{IS}(a \| b) = \frac{a}{b}  -  \log\frac{a}{b}  -  1$$
 
-I computed it over all unknown cells — both corrupted (target $a = 1.0$) and uncorrupted (target $a = 0$, clamped to $10^{-6}$ to avoid division by zero).
+I computed it over all unknown cells, both corrupted (target $a = 1.0$) and uncorrupted (target $a = 0$, clamped to $10^{-6}$ to avoid log(0)).
 
 ```
 
