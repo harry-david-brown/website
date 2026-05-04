@@ -37,21 +37,21 @@ Holding: [batch, 81] scalar corruption probability per cell
 
 Before each failure mode, it helps to have a specific picture in mind.
 
-Say we have a four-cell puzzle with digits 1 through 4. The correct solution is x=[3,1,4,2]x = [3, 1, 4, 2] x=[3,1,4,2]. During training we corrupt some cells randomly. Cell 2 gets replaced:
+Say we have a four-cell puzzle with digits 1 through 4. The correct solution is $x = [3, 1, 4, 2]$. During training we corrupt some cells randomly. Cell 2 gets replaced:
 
-z=[3,  4,  4,  2]z = [3,\; \mathbf{4},\; 4,\; 2]z=[3,4,4,2]
+$$z = [3,\; \mathbf{4},\; 4,\; 2]$$
 
 Cell 2 now says 4 instead of 1. The model sees zz z and must produce two outputs.
 
 **From the holding head,** one score per cell — the probability it is corrupted:
 
-[0.05,  0.95,  0.05,  0.05][0.05,\; \mathbf{0.95},\; 0.05,\; 0.05][0.05,0.95,0.05,0.05]
+$$[0.05,\; \mathbf{0.95},\; 0.05,\; 0.05]$$
 
 High for cell 2 (corrupted), low for the rest.
 
 **From the jump chain head,** a distribution over digits for each cell. For cell 2, given that it is corrupted, the surrounding context should force the correct value:
 
-jump chain for cell 2:[0.90,  0.04,  0.03,  0.03]\text{jump chain for cell 2:}\quad [0.90,\; 0.04,\; 0.03,\; 0.03]jump chain for cell 2:[0.90,0.04,0.03,0.03]
+$$\text{jump chain for cell 2:}\quad [0.90,\; 0.04,\; 0.03,\; 0.03]$$
 
 Digit 1 with 90% probability.
 

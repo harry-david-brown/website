@@ -6,158 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>building GIDD: six ways to fail at uniform diffusion</title>
   <style>
-
-    html {
-      color: #1a1a1a;
-      background-color: #fdfdfd;
-    }
-    body {
-      margin: 0 auto;
-      max-width: 36em;
-      padding-left: 50px;
-      padding-right: 50px;
-      padding-top: 50px;
-      padding-bottom: 50px;
-      hyphens: auto;
-      overflow-wrap: break-word;
-      text-rendering: optimizeLegibility;
-      font-kerning: normal;
-    }
-    @media (max-width: 600px) {
-      body {
-        font-size: 0.9em;
-        padding: 12px;
-      }
-      h1 {
-        font-size: 1.8em;
-      }
-    }
-    @media print {
-      html {
-        background-color: white;
-      }
-      body {
-        background-color: transparent;
-        color: black;
-        font-size: 12pt;
-      }
-      p, h2, h3 {
-        orphans: 3;
-        widows: 3;
-      }
-      h2, h3, h4 {
-        page-break-after: avoid;
-      }
-    }
-    p {
-      margin: 1em 0;
-    }
-    a {
-      color: #1a1a1a;
-    }
-    a:visited {
-      color: #1a1a1a;
-    }
-    img {
-      max-width: 100%;
-    }
-    svg {
-      height: auto;
-      max-width: 100%;
-    }
-    h1, h2, h3, h4, h5, h6 {
-      margin-top: 1.4em;
-    }
-    h5, h6 {
-      font-size: 1em;
-      font-style: italic;
-    }
-    h6 {
-      font-weight: normal;
-    }
-    ol, ul {
-      padding-left: 1.7em;
-      margin-top: 1em;
-    }
-    li > ol, li > ul {
-      margin-top: 0;
-    }
-    blockquote {
-      margin: 1em 0 1em 1.7em;
-      padding-left: 1em;
-      border-left: 2px solid #e6e6e6;
-      color: #606060;
-    }
-    code {
-      white-space: pre-wrap;
-      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
-      font-size: 85%;
-      margin: 0;
-      hyphens: manual;
-    }
-    pre {
-      margin: 1em 0;
-      overflow: auto;
-    }
-    pre code {
-      padding: 0;
-      overflow: visible;
-      overflow-wrap: normal;
-    }
-    .sourceCode {
-     background-color: transparent;
-     overflow: visible;
-    }
-    hr {
-      border: none;
-      border-top: 1px solid #1a1a1a;
-      height: 1px;
-      margin: 1em 0;
-    }
-    table {
-      margin: 1em 0;
-      border-collapse: collapse;
-      width: 100%;
-      overflow-x: auto;
-      display: block;
-      font-variant-numeric: lining-nums tabular-nums;
-    }
-    table caption {
-      margin-bottom: 0.75em;
-    }
-    tbody {
-      margin-top: 0.5em;
-      border-top: 1px solid #1a1a1a;
-      border-bottom: 1px solid #1a1a1a;
-    }
-    th {
-      border-top: 1px solid #1a1a1a;
-      padding: 0.25em 0.5em 0.25em 0.5em;
-    }
-    td {
-      padding: 0.125em 0.5em 0.25em 0.5em;
-    }
-    header {
-      margin-bottom: 4em;
-      text-align: center;
-    }
-    #TOC li {
-      list-style: none;
-    }
-    #TOC ul {
-      padding-left: 1.3em;
-    }
-    #TOC > ul {
-      padding-left: 0;
-    }
-    #TOC a:not(:hover) {
-      text-decoration: none;
-    }
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
     div.column{flex: auto; overflow-x: auto;}
     div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
-
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
     ul.task-list[class]{list-style: none;}
     ul.task-list li input[type="checkbox"] {
       font-size: inherit;
@@ -165,13 +22,19 @@
       margin: 0 0.8em 0.2em -1.6em;
       vertical-align: middle;
     }
-    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
+  <link rel="stylesheet" href="style.css" />
+  <script defer=""
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js"
+  type="text/javascript"></script>
 </head>
 <body>
 <header id="title-block-header">
-<h1 class="title">Building GIDD: Six Ways to Fail at Uniform Diffusion</h1>
+<h1 class="title">building GIDD: six ways to fail at uniform
+diffusion</h1>
 </header>
+<h1 id="building-gidd-six-ways-to-fail-at-uniform-diffusion">Building
+GIDD: Six Ways to Fail at Uniform Diffusion</h1>
 <p>In <a href="/post1.html">Post 1</a>, uniform diffusion failed. The
 model trained on 500,000 puzzles, ran for 20 epochs, and solved exactly
 zero of them. The loss curve barely moved. The conclusion at the time
@@ -219,21 +82,23 @@ Holding: [batch, 81] scalar corruption probability per cell
 <p>Before each failure mode, it helps to have a specific picture in
 mind.</p>
 <p>Say we have a four-cell puzzle with digits 1 through 4. The correct
-solution is x=[3,1,4,2]x = [3, 1, 4, 2] x=[3,1,4,2]. During training we
-corrupt some cells randomly. Cell 2 gets replaced:</p>
-<p>z=[3,  4,  4,  2]z = [3,; ,; 4,; 2]z=[3,4,4,2]</p>
+solution is <span class="math inline">\(x = [3, 1, 4, 2]\)</span>.
+During training we corrupt some cells randomly. Cell 2 gets
+replaced:</p>
+<p><span class="math display">\[z = [3,\; \mathbf{4},\; 4,\;
+2]\]</span></p>
 <p>Cell 2 now says 4 instead of 1. The model sees zz z and must produce
 two outputs.</p>
 <p><strong>From the holding head,</strong> one score per cell — the
 probability it is corrupted:</p>
-<p>[0.05,  0.95,  0.05,  0.05][0.05,; ,; 0.05,;
-0.05][0.05,0.95,0.05,0.05]</p>
+<p><span class="math display">\[[0.05,\; \mathbf{0.95},\; 0.05,\;
+0.05]\]</span></p>
 <p>High for cell 2 (corrupted), low for the rest.</p>
 <p><strong>From the jump chain head,</strong> a distribution over digits
 for each cell. For cell 2, given that it is corrupted, the surrounding
 context should force the correct value:</p>
-<p>jump chain for cell 2:[0.90,  0.04,  0.03,  0.03]jump chain for cell
-2:[0.90,0.04,0.03,0.03]</p>
+<p><span class="math display">\[\text{jump chain for cell 2:}\quad
+[0.90,\; 0.04,\; 0.03,\; 0.03]\]</span></p>
 <p>Digit 1 with 90% probability.</p>
 <p>The loss functions measure how far the model’s outputs are from these
 targets. Getting the loss function right turned out to be the first,
@@ -470,6 +335,5 @@ Diffusion</em>, 2025. <a
 href="https://arxiv.org/abs/2503.04482">arxiv.org/abs/2503.04482</a></p>
 <p>All code: <a
 href="https://github.com/harry-david-brown">github.com/harry-david-brown</a></p>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </body>
 </html>
