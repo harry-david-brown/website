@@ -41,7 +41,7 @@ Say we have a four-cell puzzle with digits 1 through 4. The correct solution is 
 
 $$z = [3,\; \mathbf{4},\; 4,\; 2]$$
 
-Cell 2 now says 4 instead of 1. The model sees zz z and must produce two outputs.
+Cell 2 now says 4 instead of 1. The model sees z and must produce two outputs.
 
 **From the holding head,** one score per cell — the probability it is corrupted:
 
@@ -53,7 +53,7 @@ High for cell 2 (corrupted), low for the rest.
 
 $$\text{jump chain for cell 2:}\quad [0.90,\; 0.04,\; 0.03,\; 0.03]$$
 
-Digit 1 with 90% probability.
+Digit "1" with 90% probability.
 
 The loss functions measure how far the model's outputs are from these targets. Getting the loss function right turned out to be the first, second, and third problem.
 

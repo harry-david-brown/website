@@ -227,7 +227,7 @@ During training we corrupt some cells randomly. Cell 2 gets
 replaced:</p>
 <p><span class="math display">\[z = [3,\; \mathbf{4},\; 4,\;
 2]\]</span></p>
-<p>Cell 2 now says 4 instead of 1. The model sees zz z and must produce
+<p>Cell 2 now says 4 instead of 1. The model sees z and must produce
 two outputs.</p>
 <p><strong>From the holding head,</strong> one score per cell — the
 probability it is corrupted:</p>
@@ -239,7 +239,7 @@ for each cell. For cell 2, given that it is corrupted, the surrounding
 context should force the correct value:</p>
 <p><span class="math display">\[\text{jump chain for cell 2:}\quad
 [0.90,\; 0.04,\; 0.03,\; 0.03]\]</span></p>
-<p>Digit 1 with 90% probability.</p>
+<p>Digit "1" with 90% probability.</p>
 <p>The loss functions measure how far the model’s outputs are from these
 targets. Getting the loss function right turned out to be the first,
 second, and third problem.</p>
