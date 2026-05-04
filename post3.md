@@ -57,16 +57,6 @@ Digit "1" with 90% probability.
 
 The loss functions measure how far the model's outputs are from these targets. Getting the loss function right turned out to be the first, second, and third problem.
 
-## What a loss function is
-
-A neural network is a large collection of weights — millions of numbers that determine what the model outputs for any input. At the start, they are random, so the model outputs garbage. Training adjusts them until the outputs are useful.
-
-The adjustment works as follows. We show the model a corrupted puzzle, let it produce outputs, then measure how wrong those outputs are using a formula — the loss function. The formula produces a single number: high means very wrong, low means close to right.
-
-Because the loss is a smooth mathematical function of the weights, we can compute for each weight the exact direction to nudge it to reduce the loss. This is the gradient. We move every weight a small amount in the right direction, then do it again on a new puzzle. Millions of times.
-
-This only works if the loss function accurately measures what we care about. A loss function that rewards the wrong behavior will produce a model that does the wrong thing very efficiently. Several of our loss functions had exactly this property.
-
 ##  Attempt 1: IS divergence, both cells
 
 The GIDD paper specifies IS divergence for the holding head. IS divergence between scalar $a$ (true corruption probability) and $b$ (model estimate) is:
