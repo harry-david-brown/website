@@ -175,23 +175,23 @@
 <h1 class="title">On Coupling, Phase Transitions, and the Uniform Diffusion Problem</h1>
 </header>
 <hr />
-<p>The six failures documented in the previous post form a pattern.
-Every time training became difficult, the instinct was to decouple.
+<p>The six failures documented in the last post form a pattern.
+Every time training became difficult the instinct was to decouple.
 Separate the two heads, give each a cleaner signal, reduce interference.
 The endpoint of that progression is two independent models with a
 pipeline between them: a corruption detector followed by a masked
 diffusion model. Which is not more powerful than what we already have.
-It is masked diffusion with extra steps and extra failure modes.</p>
+It's just masked diffusion with extra steps and extra failure modes.</p>
 <p>But the original motivation for uniform diffusion was precisely the
 coupling. A model that must simultaneously reason about which tokens are
 wrong and what they should be might learn something that a model which
 only fills in blanks cannot. The coupling is not a bug to engineer
-around. It is the point.</p>
+around. It's the whole point.</p>
 <p>This post is about why I still believe that, what the failures
-actually revealed, and what the right experiment looks like.</p>
+actually revealed, and what the right experiment should look like.</p>
 <hr />
 <h2 id="the-kuramoto-model">The Kuramoto model</h2>
-<p>In 1975, Yoshiki Kuramoto described a system of coupled oscillators:
+<p>In 1975 Yoshiki Kuramoto described a system of coupled oscillators:
 pendulums, neurons, fireflies, any system where individual elements have
 their own natural frequency and are weakly connected to each other. Each
 oscillator would prefer to run at its own rate. The coupling pulls them
@@ -203,8 +203,8 @@ Each does its own thing. The coupling is too weak to overcome the spread
 in individual frequencies. The system looks like noise.</p>
 <p>Above <span class="math inline">\(K_c\)</span>, something sudden
 happens. A macroscopic fraction of the oscillators spontaneously lock
-together in phase. They synchronize. Not because anyone told them to.
-Not because the coupling forced any individual oscillator into a
+together in phase. They synchronize. Not because anyone told them to or,
+because the coupling forced any individual oscillator into a
 specific state. But because the system as a whole crossed a threshold
 and a new stable configuration became available.</p>
 <p>This is a phase transition. Below <span
