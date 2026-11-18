@@ -196,7 +196,7 @@ were answered by a single softmax over 10 digits. The gradient from
 “learn which cells are wrong” and the gradient from “learn what the
 correct digit is” interfered with each other. Neither task was learned
 cleanly.</p>
-<p>The GIDD (Generalized Itakura-Saito Discrete Diffusion) architecture
+<p>The GIDD (Generalized Interpolating Discrete Diffusion) architecture
 proposes separating these into two output heads:</p>
 <p><strong>The holding head:</strong> for each cell, a scalar between 0
 and 1. How likely is this cell to contain a wrong digit? Trained by the
@@ -452,7 +452,7 @@ approximately 30 hours of compute, has not solved a single one.</p>
 <p>Referenced: von Rütte et al., <em>Scaling Behavior of Discrete
 Diffusion Language Models</em>, ICLR 2025. <a
 href="https://arxiv.org/abs/2512.10858">arxiv.org/abs/2512.10858</a></p>
-<p>von Rütte et al., <em>GIDD: Generalized Itakura-Saito Discrete
+<p>von Rütte et al., <em>GIDD: Generalized Interpolating Discrete
 Diffusion</em>, 2025. <a
 href="https://arxiv.org/abs/2503.04482">arxiv.org/abs/2503.04482</a></p>
 <p>All code: <a

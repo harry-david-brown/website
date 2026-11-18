@@ -11,7 +11,7 @@ In practice, getting two heads to work together turns out to be harder than it s
 
 A uniform diffusion model receives a sequence where some cells contain wrong digits. It has two things to figure out: which cells are wrong, and what they should be. In our original model, both questions were answered by a single softmax over 10 digits. The gradient from "learn which cells are wrong" and the gradient from "learn what the correct digit is" interfered with each other. Neither task was learned cleanly.
 
-The GIDD (Generalized Itakura-Saito Discrete Diffusion) architecture proposes separating these into two output heads:
+The GIDD (Generalized Interpolating Discrete Diffusion) architecture proposes separating these into two output heads:
 
 **The holding head:** for each cell, a scalar between 0 and 1. How likely is this cell to contain a wrong digit? Trained by the IS (Itakura-Saito) divergence term of the GIDD objective.
 
@@ -246,6 +246,6 @@ Back to the drawing board!
 
 Referenced: von Rütte et al., *Scaling Behavior of Discrete Diffusion Language Models*, ICLR 2025. [arxiv.org/abs/2512.10858](https://arxiv.org/abs/2512.10858)
 
-von Rütte et al., *GIDD: Generalized Itakura-Saito Discrete Diffusion*, 2025. [arxiv.org/abs/2503.04482](https://arxiv.org/abs/2503.04482)
+von Rütte et al., *GIDD: Generalized Interpolating Discrete Diffusion*, 2025. [arxiv.org/abs/2503.04482](https://arxiv.org/abs/2503.04482)
 
 All code: [github.com/harry-david-brown](https://github.com/harry-david-brown)

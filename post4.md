@@ -110,7 +110,7 @@ The little softmax that could.
 
 Hard puzzle dataset: [HuggingFace - imone/sudoku-hard-v2](https://huggingface.co/datasets/imone/sudoku-hard-v2)
 
-Referenced: von Rütte et al., *GIDD: Generalized Itakura-Saito Discrete Diffusion*, 2025. [arxiv.org/abs/2503.04482](https://arxiv.org/abs/2503.04482)
+Referenced: von Rütte et al., *GIDD: Generalized Interpolating Discrete Diffusion*, 2025. [arxiv.org/abs/2503.04482](https://arxiv.org/abs/2503.04482)
 
 Kuramoto, Y., *Chemical Oscillations, Waves, and Turbulence*, 1984.
 
